@@ -13,6 +13,6 @@ steps:
       password:
         from_secret: registry_token
     when:
-      branch: main
+      branch: master
       event: push
 
