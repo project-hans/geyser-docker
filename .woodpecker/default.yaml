@@ -1,11 +1,30 @@
 steps:
+  - name: check-latest-version
+    image: alpine/curl
+    commands:
+      - export LATEST_VERSION=$(curl -s -L 'https://download.geysermc.org/v2/projects/geyser' -H 'Accept: application/json' | jq -r '.versions[-1]')
+      - export CURRENT_VERSION=$(cat .woodpecker/current_version.txt || echo "none")
+      - |
+        if [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
+          echo "New version detected: $LATEST_VERSION"
+          echo "GEYSER_VERSION=${LATEST_VERSION}" >> .env
+          echo "BUILD_NEEDED=true" >> .env
+        else
+          echo "No new version available"
+          echo "BUILD_NEEDED=false" >> .env
+        fi
+
   - name: docker-build
     image: woodpeckerci/plugin-docker-buildx
     settings:
       registry: https://registry.lajas.tech/v2/
       repo: registry.lajas.tech/geyser-mc
-      dockerfile: Dockerfile  # Ensure this path is correct
-      tags: latest
+      dockerfile: Dockerfile
+      tags: 
+        - latest
+        - ${GEYSER_VERSION}
+      build_args:
+        - GEYSER_VERSION=${GEYSER_VERSION}
       cache-from: type=registry,ref=registry.lajas.tech/docker-build-cache
       cache-to: type=registry,ref=registry.lajas.tech/docker-build-cache
       username:
@@ -14,5 +33,23 @@ steps:
         from_secret: registry_token
     when:
       branch: master
-      event: push
+      environment:
+        BUILD_NEEDED: true
 
+  - name: update-version-file
+    image: alpine/git
+    commands:
+      - git config --global user.email "ci@example.com"
+      - git config --global user.name "CI Bot"
+      - echo ${GEYSER_VERSION} > .woodpecker/current_version.txt
+      - git add .woodpecker/current_version.txt
+      - git commit -m "Update Geyser version to ${GEYSER_VERSION}" || echo "No changes to commit"
+      - git push origin HEAD:master
+    when:
+      branch: master
+      environment:
+        BUILD_NEEDED: true
+
+when:
+  - event: [cron, push]
+  - branch: master
