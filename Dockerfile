@@ -4,8 +4,14 @@ FROM eclipse-temurin:21-jdk
 # Set the working directory in the container
 WORKDIR /app
 
-# Download the latest Geyser-Standalone jar file
-ADD https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/standalone /app/Geyser.jar
+# Accept the Geyser version as a build argument
+ARG GEYSER_VERSION
+
+# Download the specific Geyser-Standalone jar file
+ADD https://download.geysermc.org/v2/projects/geyser/versions/${GEYSER_VERSION}/builds/latest/downloads/standalone /app/Geyser.jar
+
+# Label the image with the Geyser version
+LABEL org.opencontainers.image.version=${GEYSER_VERSION}
 
 # Expose the default Geyser and Minecraft ports
 EXPOSE 19132/udp 25565
