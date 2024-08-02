@@ -10,6 +10,9 @@ ARG GEYSER_VERSION
 # Download the specific Geyser-Standalone jar file
 ADD https://download.geysermc.org/v2/projects/geyser/versions/${GEYSER_VERSION}/builds/latest/downloads/standalone /app/Geyser.jar
 
+# Set the permissions of the Geyser-Standalone jar file
+RUN chmod 644 /app/Geyser.jar
+
 # Label the image with the Geyser version
 LABEL org.opencontainers.image.version=${GEYSER_VERSION}
 
