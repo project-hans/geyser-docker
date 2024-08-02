@@ -1,18 +1,26 @@
 steps:
   - name: check-latest-version
-    image: alpine/curl
+    image: alpine
     commands:
-      - export LATEST_VERSION=$(curl -s -L 'https://download.geysermc.org/v2/projects/geyser' -H 'Accept: application/json' | jq -r '.versions[-1]')
-      - export CURRENT_VERSION=$(cat .woodpecker/current_version.txt || echo "none")
+      - apk add --no-cache curl jq
       - |
-        if [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
-          echo "New version detected: $LATEST_VERSION"
-          echo "GEYSER_VERSION=${LATEST_VERSION}" >> .env
-          echo "BUILD_NEEDED=true" >> .env
+        LATEST_VERSION=$(curl -s -L 'https://download.geysermc.org/v2/projects/geyser' -H 'Accept: application/json' | jq -r '.versions[-1]')
+        CURRENT_VERSION=$(curl -s -L http://registry.lajas.tech/v2/geyser-mc/tags/list | jq -r '.tags[]' | grep -v 'latest' | grep -v '^[[:xdigit:]]\{8\}$' | sort -rV | head -n1 || echo "none")
+        echo "Latest Geyser version: $LATEST_VERSION"
+        echo "Current image version: $CURRENT_VERSION"
+        if [ "$CURRENT_VERSION" = "none" ] || [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
+          echo "New version detected or no version tag found: $LATEST_VERSION"
+          echo "GEYSER_VERSION=$LATEST_VERSION" > .env
+          echo $LATEST_VERSION >> .tags
+          echo ${CI_COMMIT_SHA:0:8} >> .tags
         else
           echo "No new version available"
-          echo "BUILD_NEEDED=false" >> .env
+          exit 78 # Special exit code in Woodpecker to skip next steps
         fi
+        echo "Environment variables stored in .env file:"
+        cat .env
+    when:
+      event: [push, tag, cron]
 
   - name: docker-build
     image: woodpeckerci/plugin-docker-buildx
@@ -20,11 +28,11 @@ steps:
       registry: https://registry.lajas.tech/v2/
       repo: registry.lajas.tech/geyser-mc
       dockerfile: Dockerfile
-      tags: 
-        - latest
-        - ${GEYSER_VERSION}
-      build_args:
-        - GEYSER_VERSION=${GEYSER_VERSION}
+      tags_file:
+        - .tags
+      build_args_from_env:
+        - GEYSER_VERSION
+      env_file: .env
       cache-from: type=registry,ref=registry.lajas.tech/docker-build-cache
       cache-to: type=registry,ref=registry.lajas.tech/docker-build-cache
       username:
@@ -32,24 +40,4 @@ steps:
       password:
         from_secret: registry_token
     when:
-      branch: master
-      environment:
-        BUILD_NEEDED: true
-
-  - name: update-version-file
-    image: alpine/git
-    commands:
-      - git config --global user.email "ci@example.com"
-      - git config --global user.name "CI Bot"
-      - echo ${GEYSER_VERSION} > .woodpecker/current_version.txt
-      - git add .woodpecker/current_version.txt
-      - git commit -m "Update Geyser version to ${GEYSER_VERSION}" || echo "No changes to commit"
-      - git push origin HEAD:master
-    when:
-      branch: master
-      environment:
-        BUILD_NEEDED: true
-
-when:
-  - event: [cron, push]
-  - branch: master
+      event: [push, tag, cron]
