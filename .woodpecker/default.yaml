@@ -13,6 +13,7 @@ steps:
           echo "GEYSER_VERSION=$LATEST_VERSION" > .env
           echo $LATEST_VERSION >> .tags
           echo ${CI_COMMIT_SHA:0:8} >> .tags
+          echo latest >> .tags
         else
           echo "No new version available"
           exit 78 # Special exit code in Woodpecker to skip next steps
