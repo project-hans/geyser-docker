@@ -15,12 +15,13 @@ mv /tmp/Geyser.jar /app/Geyser.jar
 # Set appropriate permissions
 chmod 755 /app/Geyser.jar
 
-# If a configuration file is provided via ConfigMap, use it
-if [ -f /geyser-config/config.yml ]; then
-    CONFIG_OPTION="--config /geyser-config/config.yml"
-else
-    CONFIG_OPTION=""
+# Copy config.yml from the temporary directory to the writable PVC-backed directory
+if [ -f /config-temp/config.yml ]; then
+    cp /config-temp/config.yml /app/config.yml
 fi
 
-# Run the Geyser jar
-java -Xms1024M -jar /app/Geyser.jar $CONFIG_OPTION --nogui
+# Set the data directory (PVC-backed)
+DATA_DIR="/app"
+
+# Run the Geyser jar, pointing to the writable config file and data directory
+java -Xms1024M -jar /app/Geyser.jar --config $DATA_DIR/config.yml --nogui
