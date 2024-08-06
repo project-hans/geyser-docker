@@ -1,8 +1,8 @@
-# Use an official OpenJDK image with Java 22
+# Use a lightweight base image with Java 22
 FROM eclipse-temurin:22-jdk
 
 # Install necessary tools (curl, jq)
-RUN apk add --no-cache curl jq
+RUN apt-get update && apt-get install -y curl jq && rm -rf /var/lib/apt/lists/*
 
 # Create directories for the application and configuration
 RUN mkdir -p /app /config
@@ -16,3 +16,4 @@ WORKDIR /app
 
 # Run the fetch-and-run script at container start
 ENTRYPOINT ["/fetch-and-run.sh"]
+
