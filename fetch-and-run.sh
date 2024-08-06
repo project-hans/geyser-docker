@@ -16,8 +16,8 @@ mv /tmp/Geyser.jar /app/Geyser.jar
 chmod 755 /app/Geyser.jar
 
 # If a configuration file is provided via ConfigMap, use it
-if [ -f /config/config.yml ]; then
-    CONFIG_OPTION="--config /config/config.yml"
+if [ -f /geyser-config/config.yml ]; then
+    CONFIG_OPTION="--config /geyser-config/config.yml"
 else
     CONFIG_OPTION=""
 fi
