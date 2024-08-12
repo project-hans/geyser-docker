@@ -4,10 +4,8 @@ steps:
     settings:
       registry: https://registry.lajas.tech/v2/
       repo: registry.lajas.tech/geyser
-      dockerfile: Dockerfile  # Path to the Dockerfile
+      dockerfile: Dockerfile
       tags: latest
-      cache-from: type=registry,ref=registry.lajas.tech/docker-build-cache
-      cache-to: type=registry,ref=registry.lajas.tech/docker-build-cache
       username:
         from_secret: registry_username
       password:
