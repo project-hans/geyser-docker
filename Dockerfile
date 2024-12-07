@@ -4,7 +4,7 @@ FROM eclipse-temurin:22-jdk
 # Install necessary tools (curl, jq)
 RUN apt-get update && apt-get install -y curl jq && rm -rf /var/lib/apt/lists/* && mkdir -p /app /config
 
-COPY config.yml /config/config.yml
+COPY config.yml /app/config.yml
 # Copy the script to fetch the latest version
 COPY fetch-and-run.sh /fetch-and-run.sh
 
