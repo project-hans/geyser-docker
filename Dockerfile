@@ -2,13 +2,12 @@
 FROM eclipse-temurin:22-jdk
 
 # Install necessary tools (curl, jq)
-RUN apt-get update && apt-get install -y curl jq && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl jq && rm -rf /var/lib/apt/lists/* && mkdir -p /app /config
 
-# Create directories for the application and configuration
-RUN mkdir -p /app /config
-
+COPY config.yml /config/config.yml
 # Copy the script to fetch the latest version
 COPY fetch-and-run.sh /fetch-and-run.sh
+
 RUN chmod +x /fetch-and-run.sh
 
 # Set the working directory
